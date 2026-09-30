@@ -88,10 +88,9 @@ warnings.filterwarnings("ignore", category=FutureWarning)   # suppress sklearn d
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RANDOM_STATE = 42
-DATA_PATH = os.path.join(BASE_DIR, "data", "customer_churn.csv")
-MODEL_DIR = os.path.join(BASE_DIR, "models")
+DATA_PATH = "data/customer_churn.csv"
+MODEL_DIR = "models"
 MODEL_PATH = os.path.join(MODEL_DIR, "churn_model.pkl")
 FIGURES_DIR = os.path.join(MODEL_DIR, "figures")
 
