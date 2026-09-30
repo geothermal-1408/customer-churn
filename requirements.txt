@@ -4,7 +4,7 @@ scikit-learn==1.6.1
 matplotlib
 seaborn
 joblib
-xgboost
+#xgboost
 streamlit
-lightgbm
+#lightgbm
 imbalanced-learn
