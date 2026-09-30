@@ -29,7 +29,8 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-MODEL_PATH = "models/churn_model.pkl"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "models", "churn_model.pkl")
 
 
 # ---------------------------------------------------------------------------
@@ -37,9 +38,20 @@ MODEL_PATH = "models/churn_model.pkl"
 # ---------------------------------------------------------------------------
 @st.cache_resource(show_spinner="Loading model …")
 def load_bundle(path: str) -> dict:
-    if not os.path.exists(path):
-        return {}
-    return joblib.load(path)
+    candidate_paths = [
+        path,
+        os.path.join(BASE_DIR, "models", "churn_model.pkl"),
+        os.path.join(os.getcwd(), "models", "churn_model.pkl"),
+        os.path.join(os.getcwd(), "customer_churn", "models", "churn_model.pkl"),
+        os.path.join(os.getcwd(), "customer-churn", "models", "churn_model.pkl"),
+    ]
+    for p in candidate_paths:
+        if os.path.exists(p):
+            try:
+                return joblib.load(p)
+            except Exception:
+                continue
+    return {}
 
 
 def gauge_chart(prob: float) -> plt.Figure:
@@ -221,9 +233,18 @@ def main() -> None:
     bundle = load_bundle(MODEL_PATH)
     if not bundle:
         st.error(
-            "⚠️ No trained model found. Please run the training script first:\n\n"
-            "```bash\npython -m src.train\n```"
+            "⚠️ No trained model found at `models/churn_model.pkl`."
         )
+        if st.button("⚡ Train Model Now", type="primary"):
+            with st.spinner("Training churn prediction models (this may take a minute) ..."):
+                try:
+                    from src.train import train
+                    train()
+                    st.cache_resource.clear()
+                    st.success("✅ Training completed! Reloading app...")
+                    st.rerun()
+                except Exception as ex:
+                    st.error(f"Error during model training: {ex}")
         st.stop()
 
     model_name = bundle.get("model_name", "Unknown")
@@ -322,13 +343,13 @@ def main() -> None:
         st.info("👈  Fill in the customer profile in the sidebar and click **Predict Churn**.")
 
     # EDA figures (if available)
-    fig_dir = "models/figures"
+    fig_dir = os.path.join(BASE_DIR, "models", "figures")
     eda_figs = {
-        "Churn Distribution": f"{fig_dir}/churn_distribution.png",
-        "Tenure vs Churn": f"{fig_dir}/tenure_vs_churn.png",
-        "Monthly Charges vs Churn": f"{fig_dir}/monthly_charges_vs_churn.png",
-        "Contract vs Churn Rate": f"{fig_dir}/contract_vs_churn.png",
-        "ROC Curves": f"{fig_dir}/roc_curves.png",
+        "Churn Distribution": os.path.join(fig_dir, "churn_distribution.png"),
+        "Tenure vs Churn": os.path.join(fig_dir, "tenure_vs_churn.png"),
+        "Monthly Charges vs Churn": os.path.join(fig_dir, "monthly_charges_vs_churn.png"),
+        "Contract vs Churn Rate": os.path.join(fig_dir, "contract_vs_churn.png"),
+        "ROC Curves": os.path.join(fig_dir, "roc_curves.png"),
     }
     available = {k: v for k, v in eda_figs.items() if os.path.exists(v)}
     if available:
